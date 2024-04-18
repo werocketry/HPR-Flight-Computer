@@ -1,4 +1,8 @@
-The Python code in this directory is for parsing the data files collected by the system.  There are three types of files that can be parsed:
+### `/scripts`
+
+Contains executable scripts useful for tasks like setting up environments, running tests, and deployment. Currently, the Python code in this directory is for parsing the data files collected by the system.  
+
+There are three types of files that can be parsed:
 
 1)  Flight files from the onboard SD card.  This is very dense data that can be displayed in Excel or another spreadsheet.  However, these take
     a lot of time to setup and each is unique.  The code here will output many plots of the flight data for subsequent analysis.

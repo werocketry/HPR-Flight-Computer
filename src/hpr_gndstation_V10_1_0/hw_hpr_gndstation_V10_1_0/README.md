@@ -1,0 +1,15 @@
+- **MCU**: Arduino Nano 33 BLE
+    - [Mouser - Bluetooth Development Tools - 802.15.1 Nano 33 BLE Rev2 built-in 9-axis Inertial Measurement Unit (IMU) Without Headers](https://www.mouser.ca/ProductDetail/Arduino/ABX00072?qs=dbcCsuKDzFVZh6xIMCouTQ%3D%3D)
+- **Telemetry**: RFM96W 433MHz (USA: Ham License Required, EUR: License Free) or RFM95W 915MHz (USA: License Free)
+    - [Digi Key - RFM95W-915S2R 802.15.4 LoRa™ Transceiver Module 915MHz Antenna Not Included Surface Mount](https://www.digikey.ca/en/products/detail/rf-solutions/RFM95W-915S2R/15792834)
+- **GPS**: Ublox SAM-M8Q (optional)
+    - [Digi Key - RF Receiver Galileo, GLONASS, GPS 1.575GHz, 1.602GHz -165dBm 400kbps On-Board, Patch Module](https://www.sparkfun.com/products/15210)
+    - [SparkFun - GPS Breakout Chip Antenna, SAM-M8Q (Qwiic)](https://www.sparkfun.com/products/15210)
+- **IMU**: LSM9DS1 (Obsolete)
+    - [Sparkfun - LSM9DS1 breakout](https://www.sparkfun.com/products/retired/13284)
+- **LCD**: 20X4 Sparkfun LCD
+    - [SparkFun - 20x4 SerLCD RGB Backlight (Qwiic)](https://www.sparkfun.com/products/16398)
+- **SD Card**: Adafruit SD Card breakout board
+    - [Adafruit - MicroSD card breakout board+](https://www.adafruit.com/product/254)
+- **Antenna**: 433Mhz 5-element Yagi (Ham Only) or 900Mhz (License Free)
+    - [5 element Yagi on Digi Key](https://www.digikey.ca/en/products/filter/rf-antennas/875?s=N4IgTCBcDaIKwAICmAbJBbJA7ALggmgIYDmAliALoC%20QA)
