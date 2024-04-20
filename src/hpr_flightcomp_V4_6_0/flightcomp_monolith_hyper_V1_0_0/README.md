@@ -1,0 +1,17 @@
+- **Microprocessor**: Teensy 4.1, 3.5, or 3.6 (compatible with provided PCB file) or Teensy 4.0/3.2 (no PCB file provided)
+    - [Sparkfun - Teensy 4.1](https://www.sparkfun.com/products/16771)
+- **IMU**: LSM6DS0X (recommended), LSM9DS1, LSM6DS33, MPU6050, or LSM303 & L3GD20H combo
+    - [Adafruit - LSM6DSOX Breakout 6 DoF Accelerometer and Gyroscope - STEMMA QT / Qwiic](https://www.adafruit.com/product/4438)
+    - [Mouser - LSM6DSOXTR Inertial Measurement Units iNEMO inertial module Machine Learning Core, Finite State Machine & advanced Dig](https://www.mouser.ca/ProductDetail/STMicroelectronics/LSM6DSOXTR?qs=l7cgNqFNU1i9dcjzItLpVQ%3D%3D)
+- **Magnetometer**: LIS3MDL (recommended), LSM9DS1, or LSM303
+    - [Adafruit - LIS3MDL Breakout Board, Triple-axis Magnetometer STEMMA QT / Qwiic](https://www.adafruit.com/product/4479)
+    - [Mouser - LIS3MDLTR Board Mount Hall Effect / Magnetic Sensors Ultra Lo-Pwr Hi Perf 3-Axis 1.9-3.6V ](https://www.mouser.ca/ProductDetail/STMicroelectronics/LIS3MDLTR?qs=hnsWAVXnr6EbLE48dGN9Pg%3D%3D)
+- **100G Accelerometer**: H3LIS331DL (recommended), ADXL377, or ADXL377 & ADS1115 combo
+    - [SparkFun - H3LIS331DL Breakout Board Triple Axis Accelerometer Breakout](https://www.sparkfun.com/products/14480)
+    - [Mouser - H3LIS331DLTR ACCEL 100-400G I2C/SPI 16TFLGA](https://www.mouser.ca/ProductDetail/STMicroelectronics/H3LIS331DLTR?qs=TAo1I7FhABsAZFqkqNUSRA%3D%3D)
+    - [Digi Key - H3LIS331DLTR ACCEL 100-400G I2C/SPI 16TFLGA](https://www.digikey.ca/en/products/detail/stmicroelectronics/H3LIS331DLTR/4311633)
+- **Pressure Sensor**: MS5611 (recommended), MS5607, MPL3115A2, BMP180, BMP280, or BMP388 (Note: BMP280 & BMP388 incompatible with telemetry due to EMI)
+    - [Digi Key - MS561101BA03-50 SENSOR 17.4PSIA 24BIT](https://www.digikey.ca/en/products/detail/te-connectivity-measurement-specialties/MS561101BA03-50/5277638)
+    - [Mouser - MS561101BA03-50 SENSOR 17.4PSIA 24BIT](https://www.mouser.ca/ProductDetail/Measurement-Specialties/MS561101BA03-50?qs=%252BgKeJhng5iV%252BnCz6Qd5iDw%3D%3D)
+- **GNSS**: UBLOX M6, M7, M8, M9 (NEO footprint supported in PCB file) or Adafruit Ultimate GPS
+- **LoRa Telemetry**: RFM96W or RFM95W, both capable of TX on 433MHz or 915MHz (433MHz USA: Amateur License Required, EUR: License Free)

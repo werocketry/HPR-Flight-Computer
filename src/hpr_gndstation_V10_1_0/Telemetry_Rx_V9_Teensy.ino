@@ -1,38 +1,46 @@
-//V7 uses only a single microprocessor
-//V8 uses an optimized data stream
-//V9 overhauls the whole system
+/**
+ * @file Telemetry_Rx_V9_Teensy.ino
+ * 
+ * This file contains the setup and loop functions for the rocket's control system.
+ * 
+ * Versions:
+ * - V7 uses only a single microprocessor
+ * - V8 uses an optimized data stream
+ * - V9 overhauls the whole system
+ * 
+ * TO DO:
+ * 0) Read user data from SD card
+ * 1) Create BLE Service
+ * 2) Pin correction for LCD - OK
+ * 3) Radio 1 controls - OK
+ * 4) Radio 2 controls - OK
+ * 5) GPS Services
+ * 6) LSM9DS1 orientation
+ * 7) LSM9DS1 magnetic
+ * 8) Include Software SPI - OK
+ * 9) Create user menu interface
+ * 10) Delineate FHSS with a booster
+ */
 
-//TO DO:
-//0) Read user data from SD card
-//1) Create BLE Service
-//2) Pin correction for LCD - OK
-//3) Radio 1 controls - OK
-//4) Radio 2 controls - OK
-//5) GPS Services
-//6) LSM9DS1 orientation
-//7) LSM9DS1 magnetic
-//8) Include Software SPI - OK
-//9) Create user menu interface
-//10) Delineate FHSS with a booster
 
 #include <RH_RF95.h>
 #include <SdFat.h>
 #include <Wire.h>
-//#include <i2c_t3.h>
+// #include <i2c_t3.h>
 #include <SerLCD.h>
 #include <TinyGPS++.h>
 #include <EEPROM.h>
 #include <SPI.h>
 
-//Radio control pins
-#define radio1RST     14//ok
-#define radio1CS      15//ok
-#define radio1IRQ     17//ok
-#define radio2RST     16//ok
-#define radio2CS      20//ok
-#define radio2IRQ     22//ok
-#define radio1Freq    433.500
-#define radio2Freq    433.250
+// Radio control pins
+#define radio1RST 14 // ok
+#define radio1CS 15  // ok
+#define radio1IRQ 17 // ok
+#define radio2RST 16 // ok
+#define radio2CS 20  // ok
+#define radio2IRQ 22 // ok
+#define radio1Freq 433.500
+#define radio2Freq 433.250
 
 void preflightPacket(byte dataPacket[]);
 void inflightPacket(byte dataPacket[]);
@@ -41,35 +49,34 @@ void postflightPacket(byte dataPacket[]);
 char serialBuffer[256];
 int serialPosn = 0;
 
-//Radiohead RFM95
+// Radiohead RFM95
 RH_RF95 radio1(radio1CS, radio1IRQ);
 RH_RF95 radio2(radio2CS, radio2IRQ);
 
 // Software SPI pins
-//#define ENABLE_SOFTWARE_SPI_CLASS 1
+// #define ENABLE_SOFTWARE_SPI_CLASS 1
 #define SPI_DRIVER_SELECT 2
-#define SOFT_MISO_PIN   2
-#define SOFT_MOSI_PIN   1 
-#define SOFT_SCK_PIN    3 
-#define SOFT_CS_PIN     0 
-
+#define SOFT_MISO_PIN 2
+#define SOFT_MOSI_PIN 1
+#define SOFT_SCK_PIN 3
+#define SOFT_CS_PIN 0
 
 // SdFat software SPI template
 SoftSpiDriver<SOFT_MISO_PIN, SOFT_MOSI_PIN, SOFT_SCK_PIN> softSPi;
 #define SD_CONFIG SdSpiConfig(SOFT_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(0), &softSpi)
-//#define SD_CONFIG SdSpiConfig(SOFT_CS_PIN, SHARED_SPI, SD_SCK_MHZ(0), &softSpi)
+// #define SD_CONFIG SdSpiConfig(SOFT_CS_PIN, SHARED_SPI, SD_SCK_MHZ(0), &softSpi)
 SdFs SD;
 FsFile sustainerFile;
 FsFile boosterFile;
 
-//LCD Setup
+// LCD Setup
 SerLCD lcd;
 
 // GPS Setup
 TinyGPSPlus GPS;
 
 //---------------------------
-//Code Control Option variables
+// Code Control Option variables
 //---------------------------
 boolean displayStandard = true;
 boolean FHSS = false;
@@ -78,7 +85,7 @@ float unitConvert = 3.28084F;
 boolean LCD = true;
 boolean GPSdebug = true;
 //---------------------------
-//Data Packet variables
+// Data Packet variables
 //---------------------------
 uint8_t len;
 uint8_t len1;
@@ -115,7 +122,7 @@ boolean parseBooster = false;
 uint32_t timeLastNMEA = 0UL;
 bool ledLight = false;
 //---------------------------
-//preflight output variables
+// preflight output variables
 //---------------------------
 uint8_t event;
 int strPosn = 0;
@@ -127,40 +134,40 @@ boolean sustainerPostFlightWrite = true;
 boolean boosterPostFlightWrite = true;
 boolean boosterFileReady = false;
 unsigned long lostSignalTime = 2000000UL;
-byte j=0;
+byte j = 0;
 //---------------------------
-//preflight output variables
+// preflight output variables
 //---------------------------
-char rocketName[20]="";
-int baseAlt=0;
+char rocketName[20] = "";
+int baseAlt = 0;
 int baseGPSalt = 0;
 byte contCode;
 int satNum = 0;
 boolean fileOpen = true;
 //---------------------------
-//inflight output variables
+// inflight output variables
 //---------------------------
 uint16_t sampleTime;
-int16_t signalStrength=0;
+int16_t signalStrength = 0;
 int16_t velocity = 0;
-int16_t Alt=0;
-int16_t spin=0;
-int16_t offVert=0;
-int16_t accel=0;
+int16_t Alt = 0;
+int16_t spin = 0;
+int16_t offVert = 0;
+int16_t accel = 0;
 int16_t packetNum = 0;
 boolean apogee = false;
 unsigned long lastSustainerRX = 0UL;
 unsigned long lastBoosterRX = 0UL;
 //---------------------------
-//Postflight output variables
+// Postflight output variables
 //---------------------------
-int maxAltitude=0;
-int maxVelocity=0;
-int maxG=0;
-int maxGPSalt=0;
-//GPS output variables
+int maxAltitude = 0;
+int maxVelocity = 0;
+int maxG = 0;
+int maxGPSalt = 0;
+// GPS output variables
 byte GPSlock;
-int GPSalt=0;
+int GPSalt = 0;
 int prevGPSalt;
 char charGPSlat;
 float GPSlatitude;
@@ -172,16 +179,18 @@ float prevGPSlat = 0.0;
 float prevGPSlon = 0.0;
 unsigned long lastGPSfix = 0UL;
 //---------------------------
-//Radio Variables
+// Radio Variables
 //---------------------------
-union {
-   float GPScoord;
-   unsigned long radioTime;
-   byte unionByte[4];
+union
+{
+  float GPScoord;
+  unsigned long radioTime;
+  byte unionByte[4];
 } radioUnion;
-union {
-   int16_t unionInt;
-   byte unionByte[2]; 
+union
+{
+  int16_t unionInt;
+  byte unionByte[2];
 } radioInt;
 byte chnl1 = 0;
 byte chnl2 = 0;
@@ -196,7 +205,7 @@ unsigned long lastHopTime = 0UL;
 byte chnlUsed = 0;
 boolean band433 = false;
 //---------------------------
-//LCD Variables
+// LCD Variables
 //---------------------------
 byte whiteIntensity = 125;
 byte redIntensity = 255;
@@ -204,11 +213,11 @@ byte greenIntensity = 255;
 byte blueIntensity = 255;
 byte flightPhase = 0;
 //---------------------------
-//BlueTooth Variables
+// BlueTooth Variables
 //---------------------------
 boolean blueTooth = true;
 //---------------------------
-//Event Table
+// Event Table
 //---------------------------
 const char event_00[] PROGMEM = "Preflight";
 const char event_01[] PROGMEM = "Liftoff";
@@ -245,19 +254,19 @@ const char event_31[] PROGMEM = "Booster Time Limit";
 const char event_32[] PROGMEM = "Booster Pwr Restart";
 
 const char *const eventTable[] PROGMEM = {
-  event_00, event_01, event_02, event_03, event_04,
-  event_05, event_06, event_07, event_08, event_09,
-  event_10, event_11, event_12, event_13, event_14,
-  event_15, event_16, event_17, event_18, event_19,
-  event_20, event_21, event_22, event_23, event_24,
-  event_25, event_26, event_27, event_28, event_29,
-  event_30, event_31, event_32};
+    event_00, event_01, event_02, event_03, event_04,
+    event_05, event_06, event_07, event_08, event_09,
+    event_10, event_11, event_12, event_13, event_14,
+    event_15, event_16, event_17, event_18, event_19,
+    event_20, event_21, event_22, event_23, event_24,
+    event_25, event_26, event_27, event_28, event_29,
+    event_30, event_31, event_32};
 
-byte greenEvents[] = {5,6,7};
+byte greenEvents[] = {5, 6, 7};
 byte redEvents[] = {18, 19, 20, 26, 28};
 
 //---------------------------
-//Pyro Code Table
+// Pyro Code Table
 //---------------------------
 const char cont_0[] PROGMEM = "No Pyros Detected!";
 const char cont_1[] PROGMEM = "No Continuity Pyro 1";
@@ -271,39 +280,44 @@ const char cont_8[] PROGMEM = "Pyro Mains Only";
 const char cont_9[] PROGMEM = "Pyro Mains & Apogee";
 
 byte greenCont[5] = {5, 6, 7, 8, 9};
-byte redCont[5]   = {0, 1, 2, 3, 4};
+byte redCont[5] = {0, 1, 2, 3, 4};
 
 const char *const pyroTable[] PROGMEM = {
-  cont_0, cont_1, cont_2, cont_3, cont_4, 
-  cont_5, cont_6, cont_7, cont_8, cont_9};
+    cont_0, cont_1, cont_2, cont_3, cont_4,
+    cont_5, cont_6, cont_7, cont_8, cont_9};
 
 //---------------------------
-//433 MHz Frequency List
+// 433 MHz Frequency List
 //---------------------------
 float radioFreq[9] = {433.250, 433.500, 433.625, 433.750, 433.875, 434.000, 434.125, 434.250, 434.400};
 
 //---------------------------
-//915 MHz Frequency List
+// 915 MHz Frequency List
 //---------------------------
 byte FHSSchnl[64] = {
-  54,   48,   58,   27,   63,   43,   41,    1,   9,  20,   15,   37,   35,   55,   39,   31,
-  38,   57,   11,   42,   24,   30,   28,   23,   0,  53,   45,   50,   10,   14,   18,   26, 
-  13,    8,   56,   17,   40,   49,   61,   21,   6,   5,   44,   52,   51,   59,   33,    7, 
-  32,   25,    4,    3,   36,   12,   22,   46,   62, 47,    2,   60,   29,   16,   19,   34};
+    54, 48, 58, 27, 63, 43, 41, 1, 9, 20, 15, 37, 35, 55, 39, 31,
+    38, 57, 11, 42, 24, 30, 28, 23, 0, 53, 45, 50, 10, 14, 18, 26,
+    13, 8, 56, 17, 40, 49, 61, 21, 6, 5, 44, 52, 51, 59, 33, 7,
+    32, 25, 4, 3, 36, 12, 22, 46, 62, 47, 2, 60, 29, 16, 19, 34};
 
-void setup() {
+void setup()
+{
 
-  //Primary Serial Port
+  // Primary Serial Port
   Serial.begin(9600);
   Serial2.begin(9600);
-  
-  //Read the battery voltage
+
+  // Read the battery voltage
   pinMode(A0, INPUT);
   battVolt = 0;
-  for(byte i = 0; i < 5; i++){battVolt += analogRead(A10);delay(10);}
-  battVolt/=5;
+  for (byte i = 0; i < 5; i++)
+  {
+    battVolt += analogRead(A10);
+    delay(10);
+  }
+  battVolt /= 5;
 
-  //radio manual reset
+  // radio manual reset
   pinMode(radio1RST, OUTPUT);
   pinMode(radio2RST, OUTPUT);
   digitalWrite(radio1RST, HIGH);
@@ -316,47 +330,95 @@ void setup() {
   digitalWrite(radio2RST, HIGH);
   delay(500);
 
-  //Radiohead RFM95 setup
+  // Radiohead RFM95 setup
   radio1status = radio1.init();
   delay(50);
   radio2status = radio2.init();
-  if(!radio1status){radio1status = radio1.init();}
-  if(!radio1status){Serial.println(F("Radio1 Failed"));}
-  else{Serial.println(F("Radio1 OK!"));}
-  if(!radio2status){Serial.println(F("Radio2 Failed"));}
-  else{Serial.println(F("Radio2 OK!"));}
+  if (!radio1status)
+  {
+    radio1status = radio1.init();
+  }
+  if (!radio1status)
+  {
+    Serial.println(F("Radio1 Failed"));
+  }
+  else
+  {
+    Serial.println(F("Radio1 OK!"));
+  }
+  if (!radio2status)
+  {
+    Serial.println(F("Radio2 Failed"));
+  }
+  else
+  {
+    Serial.println(F("Radio2 OK!"));
+  }
 
-  //read the band from EEPROM
-  if((byte)EEPROM.read(63) == 1){band433 = true;}
-  
-  //read the channel from EEPROM
-  if((byte)EEPROM.read(30) == 255){EEPROM.write(30, 0);}
+  // read the band from EEPROM
+  if ((byte)EEPROM.read(63) == 1)
+  {
+    band433 = true;
+  }
+
+  // read the channel from EEPROM
+  if ((byte)EEPROM.read(30) == 255)
+  {
+    EEPROM.write(30, 0);
+  }
   chnl1 = (byte)EEPROM.read(30);
-  if((byte)EEPROM.read(61) == 255){EEPROM.write(30, 0);}
-  chnl2 = (byte)EEPROM.read(61); 
-  
-  //set the frequency
-  //freq1 = getFreq(chnl1);
-  //freq2 = getFreq(chnl2);
-  
-  if(radio1.setFrequency(radio1Freq)){Serial.print("Radio1 on ");Serial.print(radio1Freq, 3);Serial.println(" MHz");}
-  else{Serial.println("Radio1 Set Frequency Failed");}
-  if(radio2.setFrequency(radio2Freq)){Serial.print("Radio2 on ");Serial.print(radio2Freq, 3);Serial.println(" MHz");}
-  else{Serial.println("Radio2 Set Frequency Failed");}
+  if ((byte)EEPROM.read(61) == 255)
+  {
+    EEPROM.write(30, 0);
+  }
+  chnl2 = (byte)EEPROM.read(61);
 
-  //Set the flag and interrupts if FHSS is used
-  if((byte)EEPROM.read(63)==1){
+  // set the frequency
+  // freq1 = getFreq(chnl1);
+  // freq2 = getFreq(chnl2);
+
+  if (radio1.setFrequency(radio1Freq))
+  {
+    Serial.print("Radio1 on ");
+    Serial.print(radio1Freq, 3);
+    Serial.println(" MHz");
+  }
+  else
+  {
+    Serial.println("Radio1 Set Frequency Failed");
+  }
+  if (radio2.setFrequency(radio2Freq))
+  {
+    Serial.print("Radio2 on ");
+    Serial.print(radio2Freq, 3);
+    Serial.println(" MHz");
+  }
+  else
+  {
+    Serial.println("Radio2 Set Frequency Failed");
+  }
+
+  // Set the flag and interrupts if FHSS is used
+  if ((byte)EEPROM.read(63) == 1)
+  {
     FHSS = true;
-//    pinMode(radio1IRQ, INPUT_PULLUP);
-//    pinMode(radio2IRQ, INPUT_PULLUP);
+    //    pinMode(radio1IRQ, INPUT_PULLUP);
+    //    pinMode(radio2IRQ, INPUT_PULLUP);
     hailChnl_1 = chnl1;
-    hailChnl_2 = chnl2;}
-    
+    hailChnl_2 = chnl2;
+  }
+
   // Initialise the LCD and SD card
   SDinit = SD.begin(SOFT_CS_PIN);
-  if(!SDinit){Serial.println(F("SD card failed"));}
-  else{Serial.println(F("SD Card OK!"));}
-      
+  if (!SDinit)
+  {
+    Serial.println(F("SD card failed"));
+  }
+  else
+  {
+    Serial.println(F("SD Card OK!"));
+  }
+
   /* EEPROM Allocations:
   Posn 00-19: Sustainer Name
   Posn 20-23: Latitude Float
@@ -376,182 +438,273 @@ void setup() {
   Posn    65: BlueTooth Enable
   */
 
-  //Read EEPROM for the sustainer last GPS coordinates
-  for(byte i = 0; i < sizeof(rocketName); i++){rocketName[i] = EEPROM.read(i);}
-  for(byte i = 0; i < 4; i++){radioUnion.unionByte[i] = EEPROM.read(20+i);}
+  // Read EEPROM for the sustainer last GPS coordinates
+  for (byte i = 0; i < sizeof(rocketName); i++)
+  {
+    rocketName[i] = EEPROM.read(i);
+  }
+  for (byte i = 0; i < 4; i++)
+  {
+    radioUnion.unionByte[i] = EEPROM.read(20 + i);
+  }
   lastGPSlat = radioUnion.GPScoord;
   charGPSlat = EEPROM.read(24);
-  for(byte i = 0; i < 4; i++){radioUnion.unionByte[i] = EEPROM.read(25+i);}
+  for (byte i = 0; i < 4; i++)
+  {
+    radioUnion.unionByte[i] = EEPROM.read(25 + i);
+  }
   lastGPSlon = radioUnion.GPScoord;
   charGPSlon = EEPROM.read(29);
 
-  //Set display units
-  if((byte)EEPROM.read(62)==1){unitConvert = 3.28084;}
+  // Set display units
+  if ((byte)EEPROM.read(62) == 1)
+  {
+    unitConvert = 3.28084;
+  }
 
-  //Set enabling of BlueTooth
-  if((byte)EEPROM.read(65)==1){blueTooth = true;}
+  // Set enabling of BlueTooth
+  if ((byte)EEPROM.read(65) == 1)
+  {
+    blueTooth = true;
+  }
 
-  //configure GPS
+  // configure GPS
   configGPS();
-  
-  //Display the startup screen
-  startupLCD();
-  
-  len1 = sizeof(dataPacket1);
-  len2 = sizeof(dataPacket2);}//end setup
 
-void loop() {
+  // Display the startup screen
+  startupLCD();
+
+  len1 = sizeof(dataPacket1);
+  len2 = sizeof(dataPacket2);
+} // end setup
+
+void loop()
+{
 
   boolean msgRX = false;
   boolean pktRX = false;
 
-  //Serial Print Debug
-  if(micros()-timer > 1000000UL && micros() - timeLastNMEA > 500000){
+  // Serial Print Debug
+  if (micros() - timer > 1000000UL && micros() - timeLastNMEA > 500000)
+  {
     Serial.println(F("Waiting for Packet"));
-    timer = micros();}
+    timer = micros();
+  }
 
-  //check radio1
-  if(radio1.available()){
+  // check radio1
+  if (radio1.available())
+  {
 
     lastRX = micros();
 
-    //get the packet from the radio
+    // get the packet from the radio
     len = len1;
     radio1.recv(dataPacket1, &len);
 
-    //get signal strength
+    // get signal strength
     signalStrength = radio1.lastRssi();
-    
-    //set flags
+
+    // set flags
     event = (byte)dataPacket1[0];
-    if(debugSerial){
-      Serial.print("Packet on radio1: ");Serial.println(event);
-      Serial.print("Length: ");Serial.println(len);}
-    //determine if it is a sustainer or booster packet
-    if(event < 21){parseSustainer = true;}
-    else if(event == 26 || event == 27 || event == 28){parseSustainer = true;}
-    else{parseBooster = true;}
+    if (debugSerial)
+    {
+      Serial.print("Packet on radio1: ");
+      Serial.println(event);
+      Serial.print("Length: ");
+      Serial.println(len);
+    }
+    // determine if it is a sustainer or booster packet
+    if (event < 21)
+    {
+      parseSustainer = true;
+    }
+    else if (event == 26 || event == 27 || event == 28)
+    {
+      parseSustainer = true;
+    }
+    else
+    {
+      parseBooster = true;
+    }
 
+    // Create the SD file
+    if (parseSustainer && !sustainerFileCreated && SDinit)
+    {
+      createSustainerFile();
+    }
+    if (parseBooster && !boosterFileCreated && SDinit)
+    {
+      createBoosterFile();
+    }
 
-    //Create the SD file
-    if(parseSustainer && !sustainerFileCreated && SDinit){createSustainerFile();}
-    if(parseBooster   && !boosterFileCreated   && SDinit){createBoosterFile();}
-
-    //preflight packet
-    if(event == 0 || event == 30){
-      //parse the preFlight packet
+    // preflight packet
+    if (event == 0 || event == 30)
+    {
+      // parse the preFlight packet
       preflightPacket(dataPacket1);
-      //signal established
+      // signal established
       signalEst = true;
-      //set lost signal time
+      // set lost signal time
       lostSignalTime = 6000000UL;
-      //LCD
-      preflightLCD();}
+      // LCD
+      preflightLCD();
+    }
 
-    //inflight packet
-    else if(event < 26 && event != 28){
-      //set lost signal time
+    // inflight packet
+    else if (event < 26 && event != 28)
+    {
+      // set lost signal time
       lostSignalTime = 2000000UL;
-      
-      //write the last pre-flight packet to the SD card
-      if (SDinit && sustainerPreFlightWrite && parseSustainer){writePreflightData();}
-      if (SDinit && boosterPreFlightWrite   && parseBooster){writePreflightData();}
-      
-      //parse the packet
+
+      // write the last pre-flight packet to the SD card
+      if (SDinit && sustainerPreFlightWrite && parseSustainer)
+      {
+        writePreflightData();
+      }
+      if (SDinit && boosterPreFlightWrite && parseBooster)
+      {
+        writePreflightData();
+      }
+
+      // parse the packet
       inflightPacket(dataPacket1);
-      
-      //display to LCD
-      inflightLCD();}
 
-    //postflight packet
-    else if(event == 26 || event == 27 || event == 29 || event == 31){
-      //set lost signal time
+      // display to LCD
+      inflightLCD();
+    }
+
+    // postflight packet
+    else if (event == 26 || event == 27 || event == 29 || event == 31)
+    {
+      // set lost signal time
       lostSignalTime = 11000000UL;
-      //parse the packet
+      // parse the packet
       postflightPacket(dataPacket2);
-      //display to LCD
-      postflightLCD();}
+      // display to LCD
+      postflightLCD();
+    }
 
-    //error packet
-    else{errorLCD();}
+    // error packet
+    else
+    {
+      errorLCD();
+    }
 
     parseSustainer = false;
     parseBooster = false;
-    }//end check Radio1
+  } // end check Radio1
 
-  //check radio2
-  if(radio2.available()){
+  // check radio2
+  if (radio2.available())
+  {
 
     lastRX = micros();
 
-    //get the packet from the radio
+    // get the packet from the radio
     len = len2;
     radio2.recv(dataPacket2, &len);
 
-    //get signal strength
+    // get signal strength
     signalStrength = radio2.lastRssi();
-    
-    //set flags
+
+    // set flags
     event = (byte)dataPacket2[0];
-    if(debugSerial){
-      Serial.print("Packet on radio2: ");Serial.println(event);
-      Serial.print("Length: ");Serial.println(len);}
-    //determine if it is a sustainer or booster packet
-    if(event < 21){parseSustainer = true;}
-    else if(event == 26 || event == 27 || event == 28){parseSustainer = true;}
-    else{parseBooster = true;}
+    if (debugSerial)
+    {
+      Serial.print("Packet on radio2: ");
+      Serial.println(event);
+      Serial.print("Length: ");
+      Serial.println(len);
+    }
+    // determine if it is a sustainer or booster packet
+    if (event < 21)
+    {
+      parseSustainer = true;
+    }
+    else if (event == 26 || event == 27 || event == 28)
+    {
+      parseSustainer = true;
+    }
+    else
+    {
+      parseBooster = true;
+    }
 
+    // Create the SD file
+    if (parseSustainer && !sustainerFileCreated && SDinit)
+    {
+      createSustainerFile();
+    }
+    if (parseBooster && !boosterFileCreated && SDinit)
+    {
+      createBoosterFile();
+    }
 
-    //Create the SD file
-    if(parseSustainer && !sustainerFileCreated && SDinit){createSustainerFile();}
-    if(parseBooster   && !boosterFileCreated   && SDinit){createBoosterFile();}
-
-    //preflight packet
-    if(event == 0 || event == 30){
-      //parse the preFlight packet
+    // preflight packet
+    if (event == 0 || event == 30)
+    {
+      // parse the preFlight packet
       preflightPacket(dataPacket2);
-      //signal established
+      // signal established
       signalEst = true;
-      //set lost signal time
+      // set lost signal time
       lostSignalTime = 6000000UL;
-      //LCD
-      preflightLCD();}
+      // LCD
+      preflightLCD();
+    }
 
-    //inflight packet
-    else if(event < 26 && event != 28){
-      //set lost signal time
+    // inflight packet
+    else if (event < 26 && event != 28)
+    {
+      // set lost signal time
       lostSignalTime = 2000000UL;
-      
-      //write the last pre-flight packet to the SD card
-      if (SDinit && sustainerPreFlightWrite && parseSustainer){writePreflightData();}
-      if (SDinit && boosterPreFlightWrite   && parseBooster){writePreflightData();}
-      
-      //parse the packet
+
+      // write the last pre-flight packet to the SD card
+      if (SDinit && sustainerPreFlightWrite && parseSustainer)
+      {
+        writePreflightData();
+      }
+      if (SDinit && boosterPreFlightWrite && parseBooster)
+      {
+        writePreflightData();
+      }
+
+      // parse the packet
       inflightPacket(dataPacket2);
-      
-      //display to LCD
-      inflightLCD();}
 
-    //postflight packet
-    else if(event == 26 || event == 27 || event == 29 || event == 31){
-      //set lost signal time
+      // display to LCD
+      inflightLCD();
+    }
+
+    // postflight packet
+    else if (event == 26 || event == 27 || event == 29 || event == 31)
+    {
+      // set lost signal time
       lostSignalTime = 11000000UL;
-      //parse the packet
+      // parse the packet
       postflightPacket(dataPacket2);
-      //display to LCD
-      postflightLCD();}
+      // display to LCD
+      postflightLCD();
+    }
 
-    //error packet
-    else{errorLCD();}
+    // error packet
+    else
+    {
+      errorLCD();
+    }
 
     parseSustainer = false;
     parseBooster = false;
-    }//end check Radio2
-      
-  //display lost signal status
-  if(micros() - lastRX > lostSignalTime && signalEst){
+  } // end check Radio2
 
-    if(debugSerial){Serial.println(F("Signal Lost!"));}
+  // display lost signal status
+  if (micros() - lastRX > lostSignalTime && signalEst)
+  {
+
+    if (debugSerial)
+    {
+      Serial.println(F("Signal Lost!"));
+    }
 
     /* EEPROM Allocations:
     Posn 00-19: Sustainer Name
@@ -571,37 +724,71 @@ void loop() {
     Posn    64: Radio Band
     Posn    65: BlueTooth Enable
     */
-    
-    //Write the last GPS coordinates to EEPROM for later display
-    for(byte i = 0; i < sizeof(rocketName); i++){EEPROM.update(i,rocketName[i]);}
+
+    // Write the last GPS coordinates to EEPROM for later display
+    for (byte i = 0; i < sizeof(rocketName); i++)
+    {
+      EEPROM.update(i, rocketName[i]);
+    }
     radioUnion.GPScoord = lastGPSlat;
-    for(byte i = 0; i < 4; i++){EEPROM.update(i+20,radioUnion.unionByte[i]);}
+    for (byte i = 0; i < 4; i++)
+    {
+      EEPROM.update(i + 20, radioUnion.unionByte[i]);
+    }
     EEPROM.update(24, charGPSlat);
     radioUnion.GPScoord = lastGPSlon;
-    for(byte i = 0; i < 4; i++){EEPROM.update(i+25,radioUnion.unionByte[i]);}
+    for (byte i = 0; i < 4; i++)
+    {
+      EEPROM.update(i + 25, radioUnion.unionByte[i]);
+    }
     EEPROM.update(29, charGPSlon);
-    
-    //sync the SD card
-    if(SDinit && sustainerFileOpen){sustainerFile.sync();}
 
-    //display last coordinates on LCD
-    if(LCD){signalLostLCD();}
-    
-    signalEst = false;}
+    // sync the SD card
+    if (SDinit && sustainerFileOpen)
+    {
+      sustainerFile.sync();
+    }
 
-  //GPS
-  while(Serial2.available() > 0){
-    if(!msgRX){msgRX = true;}
+    // display last coordinates on LCD
+    if (LCD)
+    {
+      signalLostLCD();
+    }
+
+    signalEst = false;
+  }
+
+  // GPS
+  while (Serial2.available() > 0)
+  {
+    if (!msgRX)
+    {
+      msgRX = true;
+    }
     char c = Serial2.read();
     GPS.encode(c);
-    if(GPSdebug){serialBuffer[serialPosn] = c; serialPosn++;}}
-  if(GPSdebug && msgRX){serialBuffer[serialPosn] = '\0'; Serial.print(serialBuffer); msgRX = false; serialPosn = 0;timeLastNMEA = micros();}
+    if (GPSdebug)
+    {
+      serialBuffer[serialPosn] = c;
+      serialPosn++;
+    }
+  }
+  if (GPSdebug && msgRX)
+  {
+    serialBuffer[serialPosn] = '\0';
+    Serial.print(serialBuffer);
+    msgRX = false;
+    serialPosn = 0;
+    timeLastNMEA = micros();
+  }
 
-  //check LED
-  if(ledLight && micros()-colorStart > 2000000){
+  // check LED
+  if (ledLight && micros() - colorStart > 2000000)
+  {
     byte bright = whiteIntensity;
-    lcd.setBacklight(bright, bright, bright); //Set backlight to white
-    ledLight = false;}
-    
+    lcd.setBacklight(bright, bright, bright); // Set backlight to white
+    ledLight = false;
+  }
+
   delay(50);
-}//end loop
+} // end loop

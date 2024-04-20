@@ -1,16 +1,23 @@
-/*Functions:
- * bool radioBegin(): starts code and checks radio functionality
- * bool setRadioPWR(uint8_t pwr): sets output power (0 - 20 dbm)
- * bool setRadioFreq(float freq): sets the radio frequency (expressed as MHz, ie 434.250
- * bool radioSendPkt(uint8_t* data, uint8_t len): send a radio packet from a byte array, with length len
- * bool radioRecvPkt(uint8_t* data): recieve a packet and place data from FIFO into array "data"
- * bool radioSetMode(uint8_t mode): sets the radio mode, mostly used for setting RX continuous mode in setup
+/**
+ * @brief Functions and SPI transfer functions for radio control.
+ */
+
+/**
+ * @section Functions
  * 
- *SPI transfer functions:
- *uint8_t read8(byte reg)
- *bool write8(byte reg, byte data)
- *bool burstRead(byte reg, uint8_t *data, byte len)
- *bool burstWrite(byte reg, uint8_t *data, byte len)
+ * - bool radioBegin(): Starts code and checks radio functionality.
+ * - bool setRadioPWR(uint8_t pwr): Sets output power (0 - 20 dBm).
+ * - bool setRadioFreq(float freq): Sets the radio frequency (expressed as MHz, e.g., 434.250).
+ * - bool radioSendPkt(uint8_t* data, uint8_t len): Sends a radio packet from a byte array, with length len.
+ * - bool radioRecvPkt(uint8_t* data): Receives a packet and places data from FIFO into array "data".
+ * - bool radioSetMode(uint8_t mode): Sets the radio mode, mostly used for setting RX continuous mode in setup.
+ * 
+ * @section SPI transfer functions
+ * 
+ * - uint8_t read8(byte reg): Reads 8 bits from the specified register.
+ * - bool write8(byte reg, byte data): Writes 8 bits of data to the specified register.
+ * - bool burstRead(byte reg, uint8_t *data, byte len): Reads multiple bytes of data from consecutive registers.
+ * - bool burstWrite(byte reg, uint8_t *data, byte len): Writes multiple bytes of data to consecutive registers.
  */
 
 //---------------------------

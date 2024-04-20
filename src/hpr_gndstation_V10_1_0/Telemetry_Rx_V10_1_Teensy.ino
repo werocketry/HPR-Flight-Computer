@@ -1,21 +1,28 @@
-//V7 uses only a single microprocessor
-//V8 uses an optimized data stream
-//V9 overhauls the whole system
-//V10 eliminates the RadioHead library
-//V10_1 finalizes functionality to use two radios in tandem
-
-//TO DO:
-//0) Read user data from SD card
-//1) Create BLE Service
-//2) Pin correction for LCD - OK
-//3) Radio 1 controls - OK
-//4) Radio 2 controls - OK
-//5) GPS Services - OK
-//6) LSM9DS1 orientation
-//7) LSM9DS1 magnetic
-//8) Include Software SPI - OK
-//9) Create user menu interface
-//10) Delineate FHSS with a booster
+/**
+ * @brief File: Telemetry_Rx_V10_1_Teensy.ino
+ * 
+ * This file contains the setup and loop functions for the rocket's control system.
+ * 
+ * Versions:
+ * - V7 uses only a single microprocessor
+ * - V8 uses an optimized data stream
+ * - V9 overhauls the whole system
+ * - V10 eliminates the RadioHead library
+ * - V10_1 finalizes functionality to use two radios in tandem
+ * 
+ * TO DO:
+ * 0) Read user data from SD card
+ * 1) Create BLE Service
+ * 2) Pin correction for LCD - OK
+ * 3) Radio 1 controls - OK
+ * 4) Radio 2 controls - OK
+ * 5) GPS Services - OK
+ * 6) LSM9DS1 orientation
+ * 7) LSM9DS1 magnetic
+ * 8) Include Software SPI - OK
+ * 9) Create user menu interface
+ * 10) Delineate FHSS with a booster
+ */
 
 #include <SdFat.h>
 #include <SerLCD.h>
