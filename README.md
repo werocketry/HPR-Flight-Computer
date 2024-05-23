@@ -1,12 +1,5 @@
-# HPR Rocket Flight Computer
 
-**Original sketch by SparkyVT**  
-**NAR #85720, L3**  
-**TRA #12111, L3**
-
-*NOTE 1: I get many messages expressing interest in this system.  I plan on offering an Arduino programmable flight computer with open source code by mid-2024.  Until then, there are 5 hardware options to use this code.  Scroll to the bottom to view the 5 options.  My website is not yet running, but you can contact me at [https://www.rocketryforum.com/members/sparkyvt.810/](https://www.rocketryforum.com/members/sparkyvt.810/)*
-
-*NOTE 2: This repo on cameronbrooks11 is my personal development fork as I work towards helping establish a community standard for flight computers in amateur / student rocketry.*
+**Builds on [HPR Rocket Flight Computer](https://github.com/SparkyVT/HPR-Rocket-Flight-Computer) by SparkyVT**  
 
 ## DESCRIPTION
 
